@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"errors"
 	"flag"
 	"fmt"
@@ -46,10 +47,38 @@ func gzFilesInfoIn(dir string) (*filesInfo, error) {
 
 func digest(done <-chan struct{}, paths <-chan string, c chan<- result) {
 	for p := range paths {
-		data, err := ioutil.ReadFile(p)
+		r := result{path: p}
+
+		func() {
+			f, err := os.Open(p)
+			if err != nil {
+				r.err = err
+				return
+			}
+			defer func() {
+				_ = f.Close()
+			}()
+
+			gzr, err := gzip.NewReader(f)
+			if err != nil {
+				r.err = err
+				return
+			}
+			defer func() {
+				_ = gzr.Close()
+			}()
+
+			data, err := ioutil.ReadAll(gzr)
+			if err != nil {
+				r.err = err
+				return
+			}
+
+			r.data = string(data)
+		}()
 
 		select {
-		case c <- result{p, string(data), err}:
+		case c <- r:
 		case <-done:
 			return
 		}
