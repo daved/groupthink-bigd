@@ -184,4 +184,7 @@ func main() {
 		os.Exit(1)
 
 	}
+
+	// Return system signal handling to default.
+	sm.Stop()
 }
