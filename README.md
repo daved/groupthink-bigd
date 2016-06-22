@@ -19,5 +19,7 @@ Usage:
 
 Available flags:
 
-    -profmem={filename}
-        outputs a heap profile to the provided filename
+ 	-slow
+		Slow processing to clarify behavior.
+	-profmem={filename}
+		Run memory profile and write to named file.

@@ -14,8 +14,10 @@ Usage:
 	* This is not properly setup to be built. Use "go run main.go".
 
 Available flags:
+	-slow
+		Slow processing to clarify behavior.
 	-profmem={filename}
-		outputs a heap profile to the provided filename
+		Run memory profile and write to named file.
 
 */
 package main
@@ -30,6 +32,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/codemodus/sigmon"
 	"github.com/codemodus/vitals"
@@ -38,6 +41,12 @@ import (
 const (
 	// width controls the amount of goroutines running the digest function.
 	width = 16
+)
+
+var (
+	// slow enables a slowing of the digest function to aid the
+	// understanding of designed concurrency by changing the output timing.
+	slow = false
 )
 
 // filesInfo holds a slice of os.FileInfo along with the directory the
@@ -107,6 +116,10 @@ func digest(done <-chan struct{}, paths <-chan string, c chan<- result) {
 			r.data = string(data)
 		}()
 
+		if slow {
+			time.Sleep(time.Second)
+		}
+
 		select {
 		case c <- r:
 		case <-done:
@@ -163,6 +176,8 @@ func main() {
 	sm.Run()
 
 	// Define and parse app flags.
+	flag.BoolVar(&slow, "slow", false,
+		`Slow processing to clarify behavior.`)
 	profM := flag.String("profmem", "",
 		`Run memory profile and write to named file.`)
 
